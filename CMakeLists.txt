@@ -23,6 +23,7 @@ target_include_directories(
 
 target_sources(${PROJECT_NAME} PRIVATE ${sources})
 
+# this is a guard so we don't run tests on LITERALLY every library we import
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     
     # GENERATE DEBUG SYMBOLS IF WE'RE GOING TO TEST STUFF
