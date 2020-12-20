@@ -17,9 +17,7 @@ file(GLOB_RECURSE "${LIB}_headers" "${CMAKE_CURRENT_SOURCE_DIR}/inc/*.h")
 
 set("${LIB}_include_directories" "")
 foreach(hdr ${${LIB}_headers})
-    message("processing header : ${hdr}")
     get_filename_component(dir "${hdr}" DIRECTORY)
-    message("directory of ${hdr} is ${dir}")
     list(APPEND "${LIB}_include_directories" ${dir})
 endforeach(hdr ${${LIB}_headers})
 
