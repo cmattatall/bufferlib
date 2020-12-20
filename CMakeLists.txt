@@ -6,9 +6,8 @@ project(
     DESCRIPTION "(OPTIONALLY) THREAD-SAFE BUFFER API LIBRARY"
     LANGUAGES C
 )
-set(BUILD_TARGET ${PROJECT_NAME})
-message("CONFIGURING TARGET : ${BUILD_TARGET}")
-add_library(${BUILD_TARGET})
+message("CONFIGURING TARGET : ${PROJECT_NAME}")
+add_library(${PROJECT_NAME})
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # vscode
 
 set(sources
@@ -16,20 +15,20 @@ set(sources
 )
 
 target_include_directories(
-    ${BUILD_TARGET} 
+    ${PROJECT_NAME} 
     PUBLIC 
     "${CMAKE_CURRENT_SOURCE_DIR}" 
     "${CMAKE_CURRENT_SOURCE_DIR}/inc"
 )
 
-target_sources(${BUILD_TARGET} PRIVATE ${sources})
+target_sources(${PROJECT_NAME} PRIVATE ${sources})
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     
     # GENERATE DEBUG SYMBOLS IF WE'RE GOING TO TEST STUFF
     if(NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE "Debug")
-        target_compile_options(${BUILD_TARGET} PRIVATE "-Wall")
+        target_compile_options(${PROJECT_NAME} PRIVATE "-Wall")
     endif(NOT CMAKE_BUILD_TYPE)
 
     include(CTest)
