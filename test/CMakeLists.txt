@@ -19,7 +19,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     add_test(
         leakcheck_TEST leakcheck
         # this test is special because requires valgrind
-        COMMAND valgrind leakcheck 
+        COMMAND valgrind leakcheck --leak-check=full
         --build-generator "${CMAKE_GENERATOR}"
         --test-command "${CMAKE_CTEST_COMMAND}"
     )
