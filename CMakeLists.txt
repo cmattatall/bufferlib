@@ -1,27 +1,28 @@
 cmake_minimum_required(VERSION 3.18)
-
 project(
     BUFFERLIB 
     VERSION 1.0 
     DESCRIPTION "(OPTIONALLY) THREAD-SAFE BUFFER API LIBRARY"
     LANGUAGES C
 )
-message("CONFIGURING TARGET : ${PROJECT_NAME}")
-add_library(${PROJECT_NAME})
+message("CONFIGURING TARGET : ${LIB}")
+set(LIB "${PROJECT_NAME}")
+add_library("${LIB}")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # vscode
 
-set(sources
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/ringbuf.c"
-)
+file(GLOB_RECURSE "${LIB}_sources" "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c")
+target_sources(${LIB} PRIVATE "${${LIB}_sources}")
 
-target_include_directories(
-    ${PROJECT_NAME} 
-    PUBLIC 
-    "${CMAKE_CURRENT_SOURCE_DIR}" 
-    "${CMAKE_CURRENT_SOURCE_DIR}/inc"
-)
+file(GLOB_RECURSE "${LIB}_headers" "${CMAKE_CURRENT_SOURCE_DIR}/inc/*.h")
 
-target_sources(${PROJECT_NAME} PRIVATE ${sources})
+set("${LIB}_include_directories" "")
+foreach(hdr "${${LIB}_headers}")
+    get_filename_component(dir "${hdr}" DIRECTORY)
+    list(APPEND "${LIB}_include_directories" ${dir})
+endforeach(hdr "${${LIB}_headers}")
+
+list(REMOVE_DUPLICATES ${LIB}_include_directories)
+target_include_directories(${LIB} PUBLIC ${${LIB}_include_directories})
 
 # this is a guard so we don't run tests on LITERALLY every library we import
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
@@ -29,7 +30,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # GENERATE DEBUG SYMBOLS IF WE'RE GOING TO TEST STUFF
     if(NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE "Debug")
-        target_compile_options(${PROJECT_NAME} PRIVATE "-Wall")
+        target_compile_options(${LIB} PRIVATE "-Wall")
     endif(NOT CMAKE_BUILD_TYPE)
 
     include(CTest)
