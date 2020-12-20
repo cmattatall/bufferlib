@@ -33,6 +33,7 @@ struct ringbuf_struct
 #endif /* #if defined(RINGBUF_THREADSAFE) */
 };
 
+
 /**
  * @brief Set ringbuf's inptr to a given address
  *
@@ -43,6 +44,7 @@ struct ringbuf_struct
  * @note Does nothing if address is outside of buffer range
  */
 static void ringbuf_set_inptr_internal(ringbuf_t ringbuf, char *byte_ptr);
+
 
 /**
  * @brief Set ringbuf's inptr to a given address
@@ -55,6 +57,7 @@ static void ringbuf_set_inptr_internal(ringbuf_t ringbuf, char *byte_ptr);
  */
 static void ringbuf_set_outptr_internal(ringbuf_t ringbuf, char *byte_ptr);
 
+
 /**
  * @brief Read ringbuf's current outptr address
  *
@@ -64,6 +67,7 @@ static void ringbuf_set_outptr_internal(ringbuf_t ringbuf, char *byte_ptr);
  * @note Thread safe
  */
 static char *ringbuf_get_outptr_internal(ringbuf_t ringbuf);
+
 
 /**
  * @brief Read ringbuf's current inptr address
@@ -75,12 +79,14 @@ static char *ringbuf_get_outptr_internal(ringbuf_t ringbuf);
  */
 static char *ringbuf_get_inptr_internal(ringbuf_t ringbuf);
 
+
 /**
  * @brief Advance ringbuf's inptr, wrapping if necessary
  *
  * @param ringbuf buffer handle
  */
 static void ringbuf_inc_inptr_internal(ringbuf_t ringbuf);
+
 
 /**
  * @brief Advance ringbuf's outptr, wrapping if necessary and stopping at inptr
@@ -145,7 +151,7 @@ static bool ringbuf_is_empty_internal(ringbuf_t ringbuf);
 
 ringbuf_t ringbuf_ctor(size_t size)
 {
-    ringbuf_t ringbuf = (ringbuf_t)malloc(sizeof(ringbuf));
+    ringbuf_t ringbuf = (ringbuf_t)malloc(sizeof(*ringbuf));
     assert(ringbuf != NULL);
     ringbuf->buf.start = (char *)malloc(size);
     assert(ringbuf->buf.start != NULL);
@@ -210,7 +216,6 @@ void ringbuf_write_next_byte(ringbuf_t ringbuf, char byte)
 {
     char *inptr = ringbuf_get_inptr_internal(ringbuf);
     *inptr      = byte;
-    ringbuf->bcnt += 1;
     ringbuf_inc_bcnt_internal(ringbuf);
     ringbuf_inc_inptr_internal(ringbuf);
 }
@@ -222,8 +227,8 @@ static void ringbuf_set_inptr_internal(ringbuf_t ringbuf, char *byte_ptr)
     pthread_mutex_lock(ringbuf->inptr_lock);
 #endif /* #if defined(RINGBUF_THREADSAFE) */
 
-    const char *max_addr = ringbuf->buf.start;
-    const char *min_addr = &ringbuf->buf.start[ringbuf->buf.size - 1];
+    const char *min_addr = ringbuf->buf.start;
+    const char *max_addr = &ringbuf->buf.start[ringbuf->buf.size - 1];
     if (byte_ptr >= min_addr && byte_ptr <= max_addr)
     {
         ringbuf->in_ptr = byte_ptr;
@@ -240,8 +245,8 @@ static void ringbuf_set_outptr_internal(ringbuf_t ringbuf, char *byte_ptr)
     pthread_mutex_lock(ringbuf->outptr_lock);
 #endif /* #if defined(RINGBUF_THREADSAFE) */
 
-    const char *max_addr = ringbuf->buf.start;
-    const char *min_addr = &ringbuf->buf.start[ringbuf->buf.size - 1];
+    const char *min_addr = ringbuf->buf.start;
+    const char *max_addr = &ringbuf->buf.start[ringbuf->buf.size - 1];
     if (byte_ptr >= min_addr && byte_ptr <= max_addr)
     {
         ringbuf->out_ptr = byte_ptr;
@@ -286,11 +291,11 @@ static void ringbuf_inc_inptr_internal(ringbuf_t ringbuf)
     char *inptr = ringbuf_get_inptr_internal(ringbuf);
     if ((inptr - ringbuf->buf.start) == ringbuf->buf.size)
     {
-        ringbuf_set_inptr_internal(ringbuf, inptr + 1);
+        ringbuf_set_inptr_internal(ringbuf, ringbuf->buf.start);
     }
     else
     {
-        ringbuf_set_inptr_internal(ringbuf, ringbuf->buf.start);
+        ringbuf_set_inptr_internal(ringbuf, inptr + 1);
     }
 }
 
@@ -300,11 +305,11 @@ static void ringbuf_inc_outptr_internal(ringbuf_t ringbuf)
     char *outptr = ringbuf_get_outptr_internal(ringbuf);
     if ((outptr - ringbuf->buf.start) == ringbuf->buf.size)
     {
-        ringbuf_set_outptr_internal(ringbuf, outptr + 1);
+        ringbuf_set_outptr_internal(ringbuf, ringbuf->buf.start);
     }
     else
     {
-        ringbuf_set_outptr_internal(ringbuf, ringbuf->buf.start);
+        ringbuf_set_outptr_internal(ringbuf, outptr + 1);
     }
 }
 

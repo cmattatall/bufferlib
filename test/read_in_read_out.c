@@ -18,7 +18,7 @@
 
 #define TEST_MSG "HelloWorld"
 
-int main(void)
+int main(int argc, char **argv)
 {
     ringbuf_t ringbuf = ringbuf_ctor(2000);
     assert(ringbuf != NULL);

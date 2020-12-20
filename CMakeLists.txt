@@ -26,6 +26,13 @@ target_include_directories(${BUILD_TARGET} PUBLIC ${private_include_directories}
 target_sources(${BUILD_TARGET} PRIVATE ${sources})
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    
+    # GENERATE DEBUG SYMBOLS IF WE'RE GOING TO TEST STUFF
+    if(NOT CMAKE_BUILD_TYPE)
+        set(CMAKE_BUILD_TYPE "Debug")
+        target_compile_options(${BUILD_TARGET} PRIVATE "-Wall")
+    endif(NOT CMAKE_BUILD_TYPE)
+
     include(CTest)
     enable_testing()
     add_subdirectory(test)
