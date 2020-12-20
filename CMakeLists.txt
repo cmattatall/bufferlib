@@ -3,11 +3,6 @@ cmake_minimum_required(VERSION 3.18)
 option(BUILD_TESTING "[ON/OFF] Boolean to choose to cross compile or not" OFF)
 option(BUILD_THREAD_SAFE "[ON/OFF] Boolean to choose to build with thread safety or not" OFF)
 
-macro(configure_tests)
-    include(CTest)
-    add_subdirectory(test)
-endmacro(configure_tests)
-
 project(
     BUFFERLIB 
     VERSION 1.0 
@@ -63,11 +58,13 @@ endif(BUILD_THREAD_SAFE)
 
 
 if(BUILD_TESTING)
-    configure_tests()
+    include(CTest)
+    add_subdirectory(test)
 else()
     # If we're working on this project 
     # we should be doing all the tests anyway
     if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-        configure_tests()
+        include(CTest)
+        add_subdirectory(test)
     endif()
 endif()
