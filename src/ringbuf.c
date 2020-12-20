@@ -376,7 +376,7 @@ static bool ringbuf_is_full_internal(ringbuf_t ringbuf)
 #if defined(DEBUG)
         char *inptr  = ringbuf_get_inptr_internal(ringbuf);
         char *outptr = ringbuf_get_outptr_internal(ringbuf);
-        assert(inptr = outptr);
+        assert(inptr == outptr);
 #endif /* #if defined(DEBUG) */
     }
     return is_full;
@@ -394,7 +394,7 @@ static bool ringbuf_is_empty_internal(ringbuf_t ringbuf)
 #if defined(DEBUG)
         char *inptr  = ringbuf_get_inptr_internal(ringbuf);
         char *outptr = ringbuf_get_outptr_internal(ringbuf);
-        assert(inptr = outptr);
+        assert(inptr == outptr);
 #endif /* #if defined(DEBUG) */
     }
     return is_empty;
