@@ -3,18 +3,20 @@ cmake_minimum_required(VERSION 3.18)
 option(BUILD_TESTING "[ON/OFF] Boolean to choose to cross compile or not" OFF)
 option(BUILD_THREAD_SAFE "[ON/OFF] Boolean to choose to build with thread safety or not" OFF)
 
+macro(configure_tests)
+    include(CTest)
+    add_subdirectory(test)
+endmacro(configure_tests)
+
 project(
     BUFFERLIB 
     VERSION 1.0 
     DESCRIPTION "(OPTIONALLY) THREAD-SAFE BUFFER API LIBRARY"
     LANGUAGES C
 )
-include(CTest)
 set(LIB "${PROJECT_NAME}")
 
-macro(configure_tests)
-    add_subdirectory(test)
-endmacro(configure_tests)
+
 
 message("CONFIGURING TARGET : ${LIB}")
 add_library("${LIB}")
@@ -60,11 +62,7 @@ if(BUILD_THREAD_SAFE)
 endif(BUILD_THREAD_SAFE)
 
 
-
-
-
-if(BUILD_TESTS)
-    message("WE'RE GONNA BUILD THE TESTS!!")
+if(BUILD_TESTING)
     configure_tests()
 else()
     # If we're working on this project 
