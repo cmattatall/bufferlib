@@ -7,8 +7,8 @@ extern "C"
 /* clang-format on */
 #endif /* Start C linkage */
 
-/* When RINGBUF_THREADSAFE is defined, functions become thread safe */
-// #define RINGBUF_THREADSAFE
+/* When RINGBUF_THREAD_SAFE is defined, functions become thread safe */
+// #define RINGBUF_THREAD_SAFE
 
 #include "fat_array.h"
 
