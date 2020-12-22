@@ -127,6 +127,7 @@ static void ringbuf_dec_bcnt_internal(ringbuf_t ringbuf);
 static size_t ringbuf_peek_bcnt_internal(ringbuf_t ringbuf);
 
 
+#if !defined(RINGBUF_INPUT_OVERRUN)
 /**
  * @brief check if ring buffer is full
  *
@@ -136,7 +137,7 @@ static size_t ringbuf_peek_bcnt_internal(ringbuf_t ringbuf);
  * @note thread safe
  */
 static bool ringbuf_is_full_internal(ringbuf_t ringbuf);
-
+#endif /*#if !defined(RINGBUF_INPUT_OVERRUN) */
 
 /**
  * @brief check if ring buffer is empty
@@ -214,10 +215,27 @@ char *ringbuf_read_next(ringbuf_t ringbuf)
 
 void ringbuf_write_next_byte(ringbuf_t ringbuf, char byte)
 {
-    char *inptr = ringbuf_get_inptr_internal(ringbuf);
-    *inptr      = byte;
-    ringbuf_inc_bcnt_internal(ringbuf);
-    ringbuf_inc_inptr_internal(ringbuf);
+    char *current_inptr = ringbuf_get_inptr_internal(ringbuf);
+    char *outptr        = ringbuf_get_outptr_internal(ringbuf);
+
+    if (current_inptr == outptr && ringbuf_is_full_internal(ringbuf))
+    {
+#if defined(RINGBUF_INPUT_OVERRUN)
+        /* Overwrite outptr,
+         * then advance BOTH inptr and outptr */
+        /* Do not increase bcnt */
+        *current_inptr = byte;
+        ringbuf_inc_outptr_internal(ringbuf);
+        ringbuf_inc_inptr_internal(ringbuf);
+#endif /* #if defined(RINGBUF_INPUT_OVERRUN) */
+    }
+    else
+    {
+        /* buffer is not full */
+        *current_inptr = byte;
+        ringbuf_inc_bcnt_internal(ringbuf);
+        ringbuf_inc_inptr_internal(ringbuf);
+    }
 }
 
 
@@ -365,6 +383,7 @@ static size_t ringbuf_peek_bcnt_internal(ringbuf_t ringbuf)
 }
 
 
+#if !defined(RINGBUF_INPUT_OVERRUN)
 static bool ringbuf_is_full_internal(ringbuf_t ringbuf)
 {
     bool   is_full = false;
@@ -381,6 +400,7 @@ static bool ringbuf_is_full_internal(ringbuf_t ringbuf)
     }
     return is_full;
 }
+#endif /* #if !defined(RINGBUF_INPUT_OVERRUN) */
 
 
 static bool ringbuf_is_empty_internal(ringbuf_t ringbuf)

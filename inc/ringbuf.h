@@ -7,8 +7,11 @@ extern "C"
 /* clang-format on */
 #endif /* Start C linkage */
 
-/* When RINGBUF_THREAD_SAFE is defined, functions become thread safe */
-// #define RINGBUF_THREAD_SAFE
+/* uncomment this to enable protection of shared variables */
+//      #define RINGBUF_THREAD_SAFE
+
+/* uncomment this to allow overwrite when input wraps */
+//      #define RINGBUF_INPUT_OVERRUN
 
 #include "fat_array.h"
 
