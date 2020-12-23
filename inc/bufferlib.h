@@ -24,7 +24,7 @@ typedef struct buffer_handle
     int (*read_next)(buffer_instance_handle);
     int (*write_next)(buffer_instance_handle, char);
     size_t (*size)(buffer_instance_handle);
-    void (*deinit)(buffer_instance_handle);
+    void (*delete)(buffer_instance_handle*);
 } buffer_handle;
 
 

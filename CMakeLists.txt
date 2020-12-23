@@ -36,8 +36,10 @@ list(APPEND SUPPORTED_BUILD_TYPES "Debug")
 list(APPEND SUPPORTED_BUILD_TYPES "Release")
 list(APPEND SUPPORTED_BUILD_TYPES "MinSizeRel")
 list(APPEND SUPPORTED_BUILD_TYPES "RelWithDebInfo")
-set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type chosen by the user at configure time")
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${SUPPORTED_BUILD_TYPES})
+if(NOT CMAKE_BUILD_TYPE)
+set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type chosen by the user at configure time" FORCE)
+endif(NOT CMAKE_BUILD_TYPE)
 
 
 ################################################################################

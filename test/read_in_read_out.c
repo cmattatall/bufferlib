@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 
     assert(0 == strcmp(input_buf, output_buf));
 
-    ringbuf.deinit;
+    ringbuf.delete;
     free(input_buf);
     free(output_buf);
     return 0;

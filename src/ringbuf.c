@@ -21,7 +21,7 @@
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 
 
-struct ringbuf
+typedef struct
 {
     char *             in_ptr;
     char *             out_ptr;
@@ -34,22 +34,22 @@ struct ringbuf
     pthread_mutex_t inptr_lock;
     pthread_mutex_t outptr_lock;
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
-};
+} ringbuf_t;
 
-static void   ringbuf_write_inptr_SAFE(struct ringbuf *ringbuf, char byte);
-static void   ringbuf_write_outptr_SAFE(struct ringbuf *ringbuf, char byte);
-static char   ringbuf_read_outptr_SAFE(struct ringbuf *ringbuf);
-static char   ringbuf_read_inptr_SAFE(struct ringbuf *ringbuf);
-static void   ringbuf_inc_inptr_SAFE(struct ringbuf *ringbuf);
-static void   ringbuf_inc_outptr_SAFE(struct ringbuf *ringbuf);
-static void   ringbuf_inc_bcnt_SAFE(struct ringbuf *ringbuf);
-static void   ringbuf_dec_bcnt_SAFE(struct ringbuf *ringbuf);
-static size_t ringbuf_peek_bcnt_SAFE(struct ringbuf *ringbuf);
-static bool   ringbuf_ptr_equal_SAFE(struct ringbuf *ringbuf);
+static void   ringbuf_write_inptr_SAFE(ringbuf_t *ringbuf, char byte);
+static void   ringbuf_write_outptr_SAFE(ringbuf_t *ringbuf, char byte);
+static char   ringbuf_read_outptr_SAFE(ringbuf_t *ringbuf);
+static char   ringbuf_read_inptr_SAFE(ringbuf_t *ringbuf);
+static void   ringbuf_inc_inptr_SAFE(ringbuf_t *ringbuf);
+static void   ringbuf_inc_outptr_SAFE(ringbuf_t *ringbuf);
+static void   ringbuf_inc_bcnt_SAFE(ringbuf_t *ringbuf);
+static void   ringbuf_dec_bcnt_SAFE(ringbuf_t *ringbuf);
+static size_t ringbuf_peek_bcnt_SAFE(ringbuf_t *ringbuf);
+static bool   ringbuf_ptr_equal_SAFE(ringbuf_t *ringbuf);
 
 
 #if !defined(RINGBUF_INPUT_OVERRUN)
-static bool ringbuf_is_full_SAFE(struct ringbuf *ringbuf);
+static bool ringbuf_is_full_SAFE(ringbuf_t *ringbuf);
 #endif /*#if !defined(RINGBUF_INPUT_OVERRUN) */
 
 /**
@@ -60,21 +60,23 @@ static bool ringbuf_is_full_SAFE(struct ringbuf *ringbuf);
  *
  * @note thread safe
  */
-static bool ringbuf_is_empty_SAFE(struct ringbuf *ringbuf);
+static bool ringbuf_is_empty_SAFE(ringbuf_t *ringbuf);
 
 
 buffer_instance_handle ringbuf_ctor(size_t size)
 {
-    struct ringbuf *ringbuf = (struct ringbuf *)malloc(sizeof(*ringbuf));
+    ringbuf_t *ringbuf = malloc(sizeof(*ringbuf));
     assert(ringbuf != NULL);
 
-    ringbuf->buf.start = (char *)malloc(size);
+    ringbuf->buf.start = malloc(size);
     assert(ringbuf->buf.start != NULL);
-    ringbuf->buf.size = size;
     memset(ringbuf->buf.start, 0, size);
-    ringbuf->bcnt    = 0;
     ringbuf->in_ptr  = ringbuf->buf.start;
     ringbuf->out_ptr = ringbuf->buf.start;
+
+    ringbuf->buf.size = size;
+    ringbuf->bcnt     = 0;
+
 #if defined(RINGBUF_THREAD_SAFE)
     pthread_mutex_init(&ringbuf->inptr_val_lock, NULL);
     pthread_mutex_init(&ringbuf->outptr_val_lock, NULL);
@@ -83,14 +85,14 @@ buffer_instance_handle ringbuf_ctor(size_t size)
     pthread_mutex_init(&ringbuf->outptr_lock, NULL);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 
-    return ringbuf;
+    return (buffer_instance_handle)ringbuf;
 }
 
-void ringbuf_dtor(buffer_instance_handle this)
+void ringbuf_dtor(buffer_instance_handle *this)
 {
-    struct ringbuf *ringbuf = (struct ringbuf *)this;
-    if (NULL != ringbuf)
+    if (*this != NULL)
     {
+        ringbuf_t *ringbuf = *this;
         free(ringbuf->buf.start);
 #if defined(RINGBUF_THREAD_SAFE)
         pthread_mutex_destroy(&ringbuf->inptr_val_lock);
@@ -100,14 +102,15 @@ void ringbuf_dtor(buffer_instance_handle this)
         pthread_mutex_destroy(&ringbuf->inptr_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
         free(ringbuf);
+        *this = NULL;
     }
 }
 
 
 int ringbuf_read_next(buffer_instance_handle this)
 {
-    int             byte_read;
-    struct ringbuf *ringbuf = (struct ringbuf *)this;
+    int        byte_read;
+    ringbuf_t *ringbuf = this;
 
     if (ringbuf_is_empty_SAFE(ringbuf))
     {
@@ -130,8 +133,8 @@ int ringbuf_read_next(buffer_instance_handle this)
 
 int ringbuf_write_next(buffer_instance_handle this, char byte)
 {
-    int             byte_written;
-    struct ringbuf *ringbuf = (struct ringbuf *)(this);
+    int        byte_written;
+    ringbuf_t *ringbuf = this;
 
     if (ringbuf_is_full_SAFE(ringbuf))
     {
@@ -167,13 +170,13 @@ size_t ringbuf_size(buffer_instance_handle this)
     }
     else
     {
-        struct ringbuf ringbuf = *(struct ringbuf *)this;
-        return ringbuf.buf.size;
+        ringbuf_t *ringbuf = this;
+        return ringbuf->buf.size;
     }
 }
 
 
-static void ringbuf_write_inptr_SAFE(struct ringbuf *ringbuf, char byte)
+static void ringbuf_write_inptr_SAFE(ringbuf_t *ringbuf, char byte)
 {
 
 #if defined(RINGBUF_THREAD_SAFE)
@@ -188,7 +191,7 @@ static void ringbuf_write_inptr_SAFE(struct ringbuf *ringbuf, char byte)
 }
 
 
-static void ringbuf_write_outptr_SAFE(struct ringbuf *ringbuf, char byte)
+static void ringbuf_write_outptr_SAFE(ringbuf_t *ringbuf, char byte)
 {
 
 #if defined(RINGBUF_THREAD_SAFE)
@@ -203,7 +206,7 @@ static void ringbuf_write_outptr_SAFE(struct ringbuf *ringbuf, char byte)
 }
 
 
-static char ringbuf_read_outptr_SAFE(struct ringbuf *ringbuf)
+static char ringbuf_read_outptr_SAFE(ringbuf_t *ringbuf)
 {
 
 #if defined(RINGBUF_THREAD_SAFE)
@@ -219,7 +222,7 @@ static char ringbuf_read_outptr_SAFE(struct ringbuf *ringbuf)
     return byte;
 }
 
-static char ringbuf_read_inptr_SAFE(struct ringbuf *ringbuf)
+static char ringbuf_read_inptr_SAFE(ringbuf_t *ringbuf)
 {
 
 #if defined(RINGBUF_THREAD_SAFE)
@@ -236,7 +239,7 @@ static char ringbuf_read_inptr_SAFE(struct ringbuf *ringbuf)
 }
 
 
-static void ringbuf_inc_inptr_SAFE(struct ringbuf *ringbuf)
+static void ringbuf_inc_inptr_SAFE(ringbuf_t *ringbuf)
 {
     uint8_t *new_ptr;
     if ((ringbuf->in_ptr - ringbuf->buf.start) == ringbuf->buf.size)
@@ -260,7 +263,7 @@ static void ringbuf_inc_inptr_SAFE(struct ringbuf *ringbuf)
 }
 
 
-static void ringbuf_inc_outptr_SAFE(struct ringbuf *ringbuf)
+static void ringbuf_inc_outptr_SAFE(ringbuf_t *ringbuf)
 {
     uint8_t *new_ptr;
     if ((ringbuf->out_ptr - ringbuf->buf.start) == ringbuf->buf.size)
@@ -284,7 +287,7 @@ static void ringbuf_inc_outptr_SAFE(struct ringbuf *ringbuf)
 }
 
 
-static void ringbuf_inc_bcnt_SAFE(struct ringbuf *ringbuf)
+static void ringbuf_inc_bcnt_SAFE(ringbuf_t *ringbuf)
 {
 
 #if defined(RINGBUF_THREAD_SAFE)
@@ -302,7 +305,7 @@ static void ringbuf_inc_bcnt_SAFE(struct ringbuf *ringbuf)
 }
 
 
-static void ringbuf_dec_bcnt_SAFE(struct ringbuf *ringbuf)
+static void ringbuf_dec_bcnt_SAFE(ringbuf_t *ringbuf)
 {
 
 #if defined(RINGBUF_THREAD_SAFE)
@@ -320,7 +323,7 @@ static void ringbuf_dec_bcnt_SAFE(struct ringbuf *ringbuf)
 }
 
 
-static size_t ringbuf_peek_bcnt_SAFE(struct ringbuf *ringbuf)
+static size_t ringbuf_peek_bcnt_SAFE(ringbuf_t *ringbuf)
 {
     size_t bcnt;
 #if defined(RINGBUF_THREAD_SAFE)
@@ -338,7 +341,7 @@ static size_t ringbuf_peek_bcnt_SAFE(struct ringbuf *ringbuf)
 
 
 #if !defined(RINGBUF_INPUT_OVERRUN)
-static bool ringbuf_is_full_SAFE(struct ringbuf *ringbuf)
+static bool ringbuf_is_full_SAFE(ringbuf_t *ringbuf)
 {
     bool   is_full = false;
     size_t bcnt    = ringbuf_peek_bcnt_SAFE(ringbuf);
@@ -351,7 +354,7 @@ static bool ringbuf_is_full_SAFE(struct ringbuf *ringbuf)
 #endif /* #if !defined(RINGBUF_INPUT_OVERRUN) */
 
 
-static bool ringbuf_is_empty_SAFE(struct ringbuf *ringbuf)
+static bool ringbuf_is_empty_SAFE(ringbuf_t *ringbuf)
 {
     bool   is_empty = false;
     size_t bcnt     = ringbuf_peek_bcnt_SAFE(ringbuf);
@@ -362,7 +365,7 @@ static bool ringbuf_is_empty_SAFE(struct ringbuf *ringbuf)
     return is_empty;
 }
 
-static bool ringbuf_ptr_equal_SAFE(struct ringbuf *ringbuf)
+static bool ringbuf_ptr_equal_SAFE(ringbuf_t *ringbuf)
 {
     char *inptr;
     char *outptr;
