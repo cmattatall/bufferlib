@@ -12,6 +12,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <limits.h>
 
 #include "ringbuf.h"
 
@@ -20,123 +21,35 @@
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 
 
-struct ringbuf_struct
+struct ringbuf
 {
     char *             in_ptr;
     char *             out_ptr;
     size_t             bcnt; /* needed for overlap edgecase handling */
     struct fat_pointer buf;
 #if defined(RINGBUF_THREAD_SAFE)
+    pthread_mutex_t inptr_val_lock;
+    pthread_mutex_t outptr_val_lock;
+    pthread_mutex_t bcnt_val_lock;
     pthread_mutex_t inptr_lock;
     pthread_mutex_t outptr_lock;
-    pthread_mutex_t bcnt_lock;
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 };
 
-
-/**
- * @brief Set ringbuf's inptr to a given address
- *
- * @param ringbuf buffer handle
- * @param byte_ptr new address for inptr
- *
- * @note Thread safe
- * @note Does nothing if address is outside of buffer range
- */
-static void ringbuf_set_inptr_internal(ringbuf_t ringbuf, char *byte_ptr);
-
-
-/**
- * @brief Set ringbuf's inptr to a given address
- *
- * @param ringbuf buffer handle
- * @param byte_ptr new address for outptr
- *
- * @note Thread safe
- * @note Does nothing if address is outside of buffer range
- */
-static void ringbuf_set_outptr_internal(ringbuf_t ringbuf, char *byte_ptr);
-
-
-/**
- * @brief Read ringbuf's current outptr address
- *
- * @param ringbuf buffer handle
- * @return char* current outptr address
- *
- * @note Thread safe
- */
-static char *ringbuf_get_outptr_internal(ringbuf_t ringbuf);
-
-
-/**
- * @brief Read ringbuf's current inptr address
- *
- * @param ringbuf buffer handle
- * @return char* current inptr address
- *
- * @note Thread safe
- */
-static char *ringbuf_get_inptr_internal(ringbuf_t ringbuf);
-
-
-/**
- * @brief Advance ringbuf's inptr, wrapping if necessary
- *
- * @param ringbuf buffer handle
- */
-static void ringbuf_inc_inptr_internal(ringbuf_t ringbuf);
-
-
-/**
- * @brief Advance ringbuf's outptr, wrapping if necessary and stopping at inptr
- *
- * @param ringbuf buffer handle
- */
-static void ringbuf_inc_outptr_internal(ringbuf_t ringbuf);
-
-
-/**
- * @brief increase ringbuffer byte count
- *
- * @param ringbuf buffer handle
- *
- * @note thread safe
- */
-static void ringbuf_inc_bcnt_internal(ringbuf_t ringbuf);
-
-
-/**
- * @brief decrease ringbuffer byte count
- *
- * @param ringbuf buffer handle
- *
- * @note thread safe
- */
-static void ringbuf_dec_bcnt_internal(ringbuf_t ringbuf);
-
-
-/**
- * @brief peek bytecount in the ring buffer
- *
- * @param ringbuf buffer handle
- * @return size_t buffer byte count
- *
- * @note thread safe
- */
-static size_t ringbuf_peek_bcnt_internal(ringbuf_t ringbuf);
+static void   ringbuf_write_inptr_SAFE(struct ringbuf *ringbuf, char byte);
+static void   ringbuf_write_outptr_SAFE(struct ringbuf *ringbuf, char byte);
+static char   ringbuf_read_outptr_SAFE(struct ringbuf *ringbuf);
+static char   ringbuf_read_inptr_SAFE(struct ringbuf *ringbuf);
+static void   ringbuf_inc_inptr_SAFE(struct ringbuf *ringbuf);
+static void   ringbuf_inc_outptr_SAFE(struct ringbuf *ringbuf);
+static void   ringbuf_inc_bcnt_SAFE(struct ringbuf *ringbuf);
+static void   ringbuf_dec_bcnt_SAFE(struct ringbuf *ringbuf);
+static size_t ringbuf_peek_bcnt_SAFE(struct ringbuf *ringbuf);
+static bool   ringbuf_ptr_equal_SAFE(struct ringbuf *ringbuf);
 
 
 #if !defined(RINGBUF_INPUT_OVERRUN)
-/**
- * @brief check if ring buffer is full
- *
- * @param ringbuf buffer handle
- * @return true if full. otherwise false
- *
- * @note thread safe
- */
-static bool ringbuf_is_full_internal(ringbuf_t ringbuf);
+static bool ringbuf_is_full_SAFE(struct ringbuf *ringbuf);
 #endif /*#if !defined(RINGBUF_INPUT_OVERRUN) */
 
 /**
@@ -147,13 +60,14 @@ static bool ringbuf_is_full_internal(ringbuf_t ringbuf);
  *
  * @note thread safe
  */
-static bool ringbuf_is_empty_internal(ringbuf_t ringbuf);
+static bool ringbuf_is_empty_SAFE(struct ringbuf *ringbuf);
 
 
-ringbuf_t ringbuf_ctor(size_t size)
+buffer_instance_handle ringbuf_ctor(size_t size)
 {
-    ringbuf_t ringbuf = (ringbuf_t)malloc(sizeof(*ringbuf));
+    struct ringbuf *ringbuf = (struct ringbuf *)malloc(sizeof(*ringbuf));
     assert(ringbuf != NULL);
+
     ringbuf->buf.start = (char *)malloc(size);
     assert(ringbuf->buf.start != NULL);
     ringbuf->buf.size = size;
@@ -162,113 +76,207 @@ ringbuf_t ringbuf_ctor(size_t size)
     ringbuf->in_ptr  = ringbuf->buf.start;
     ringbuf->out_ptr = ringbuf->buf.start;
 #if defined(RINGBUF_THREAD_SAFE)
+    pthread_mutex_init(&ringbuf->inptr_val_lock, NULL);
+    pthread_mutex_init(&ringbuf->outptr_val_lock, NULL);
+    pthread_mutex_init(&ringbuf->bcnt_val_lock, NULL);
     pthread_mutex_init(&ringbuf->inptr_lock, NULL);
     pthread_mutex_init(&ringbuf->outptr_lock, NULL);
-    pthread_mutex_init(&ringbuf->bcnt_lock, NULL);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 
     return ringbuf;
 }
 
-void ringbuf_dtor(ringbuf_t ringbuf)
+void ringbuf_dtor(buffer_instance_handle this)
 {
+    struct ringbuf *ringbuf = (struct ringbuf *)this;
     if (NULL != ringbuf)
     {
         free(ringbuf->buf.start);
 #if defined(RINGBUF_THREAD_SAFE)
+        pthread_mutex_destroy(&ringbuf->inptr_val_lock);
+        pthread_mutex_destroy(&ringbuf->outptr_val_lock);
+        pthread_mutex_destroy(&ringbuf->bcnt_val_lock);
         pthread_mutex_destroy(&ringbuf->inptr_lock);
-        pthread_mutex_destroy(&ringbuf->outptr_lock);
-        pthread_mutex_destroy(&ringbuf->bcnt_lock);
+        pthread_mutex_destroy(&ringbuf->inptr_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
         free(ringbuf);
     }
 }
 
 
-char *ringbuf_read_next(ringbuf_t ringbuf)
+int ringbuf_read_next(buffer_instance_handle this)
 {
-    char *current_outptr = ringbuf_get_outptr_internal(ringbuf);
-    char *inptr          = ringbuf_get_inptr_internal(ringbuf);
+    int             byte_read;
+    struct ringbuf *ringbuf = (struct ringbuf *)this;
 
-    /* If outptr overlaps inptr, either buffer is full, or buffer is empty */
-    if (current_outptr == inptr)
+    if (ringbuf_is_empty_SAFE(ringbuf))
     {
-        /*
-         * If empty, we have nothing to read,
-         * and we should not advance outptr past inptr
-         */
-        if (ringbuf_is_empty_internal(ringbuf))
-        {
-            current_outptr = NULL;
-        }
+        byte_read = BUFFERLIB_READ_FAILURE;
+    }
+    else
+    {
+        byte_read = ringbuf_read_outptr_SAFE(ringbuf);
     }
 
-    if (current_outptr != NULL)
+    if (byte_read != BUFFERLIB_READ_FAILURE)
     {
-        ringbuf_inc_outptr_internal(ringbuf);
-        ringbuf_dec_bcnt_internal(ringbuf);
+        ringbuf_inc_outptr_SAFE(ringbuf);
+        ringbuf_dec_bcnt_SAFE(ringbuf);
     }
 
-    return current_outptr;
+    return byte_read;
 }
 
 
-void ringbuf_write_next_byte(ringbuf_t ringbuf, char byte)
+int ringbuf_write_next(buffer_instance_handle this, char byte)
 {
-    char *current_inptr = ringbuf_get_inptr_internal(ringbuf);
-    char *outptr        = ringbuf_get_outptr_internal(ringbuf);
+    int             byte_written;
+    struct ringbuf *ringbuf = (struct ringbuf *)(this);
 
-    if (current_inptr == outptr && ringbuf_is_full_internal(ringbuf))
+    if (ringbuf_is_full_SAFE(ringbuf))
     {
 #if defined(RINGBUF_INPUT_OVERRUN)
         /* Overwrite outptr,
          * then advance BOTH inptr and outptr */
         /* Do not increase bcnt */
         *current_inptr = byte;
-        ringbuf_inc_outptr_internal(ringbuf);
-        ringbuf_inc_inptr_internal(ringbuf);
+        ringbuf_inc_outptr_SAFE(ringbuf);
+        ringbuf_inc_inptr_SAFE(ringbuf);
+        byte_written = byte;
+#else
+        byte_written = BUFFERLIB_WRITE_FAILURE;
 #endif /* #if defined(RINGBUF_INPUT_OVERRUN) */
     }
     else
     {
-        /* buffer is not full */
-        *current_inptr = byte;
-        ringbuf_inc_bcnt_internal(ringbuf);
-        ringbuf_inc_inptr_internal(ringbuf);
+        ringbuf_write_inptr_SAFE(ringbuf, byte);
+        ringbuf_inc_bcnt_SAFE(ringbuf);
+        ringbuf_inc_inptr_SAFE(ringbuf);
+        byte_written = byte;
+    }
+
+    return byte_written;
+}
+
+
+size_t ringbuf_size(buffer_instance_handle this)
+{
+    if (this == NULL)
+    {
+        return 0;
+    }
+    else
+    {
+        struct ringbuf ringbuf = *(struct ringbuf *)this;
+        return ringbuf.buf.size;
     }
 }
 
 
-static void ringbuf_set_inptr_internal(ringbuf_t ringbuf, char *byte_ptr)
+static void ringbuf_write_inptr_SAFE(struct ringbuf *ringbuf, char byte)
 {
+
+#if defined(RINGBUF_THREAD_SAFE)
+    pthread_mutex_val_lock(&ringbuf->inptr_val_lock);
+#endif /* #if defined(RINGBUF_THREAD_SAFE) */
+
+    *ringbuf->in_ptr = byte;
+
+#if defined(RINGBUF_THREAD_SAFE)
+    pthread_mutex_unlock(&ringbuf->inptr_val_lock);
+#endif /* #if defined(RINGBUF_THREAD_SAFE) */
+}
+
+
+static void ringbuf_write_outptr_SAFE(struct ringbuf *ringbuf, char byte)
+{
+
+#if defined(RINGBUF_THREAD_SAFE)
+    pthread_mutex_val_lock(&ringbuf->outptr_val_lock);
+#endif /* #if defined(RINGBUF_THREAD_SAFE) */
+
+    *ringbuf->out_ptr = byte;
+
+#if defined(RINGBUF_THREAD_SAFE)
+    pthread_mutex_unlock(&ringbuf->outptr_val_lock);
+#endif /* #if defined(RINGBUF_THREAD_SAFE) */
+}
+
+
+static char ringbuf_read_outptr_SAFE(struct ringbuf *ringbuf)
+{
+
+#if defined(RINGBUF_THREAD_SAFE)
+    pthread_mutex_val_lock(&ringbuf->outptr_val_lock);
+#endif /* #if defined(RINGBUF_THREAD_SAFE) */
+
+    char byte = *ringbuf->out_ptr;
+
+#if defined(RINGBUF_THREAD_SAFE)
+    pthread_mutex_unlock(&ringbuf->outptr_val_lock);
+#endif /* #if defined(RINGBUF_THREAD_SAFE) */
+
+    return byte;
+}
+
+static char ringbuf_read_inptr_SAFE(struct ringbuf *ringbuf)
+{
+
+#if defined(RINGBUF_THREAD_SAFE)
+    pthread_mutex_val_lock(&ringbuf->inptr_val_lock);
+#endif /* #if defined(RINGBUF_THREAD_SAFE) */
+
+    char byte = *ringbuf->in_ptr;
+
+#if defined(RINGBUF_THREAD_SAFE)
+    pthread_mutex_unlock(&ringbuf->inptr_val_lock);
+#endif /* #if defined(RINGBUF_THREAD_SAFE) */
+
+    return byte;
+}
+
+
+static void ringbuf_inc_inptr_SAFE(struct ringbuf *ringbuf)
+{
+    uint8_t *new_ptr;
+    if ((ringbuf->in_ptr - ringbuf->buf.start) == ringbuf->buf.size)
+    {
+        new_ptr = ringbuf->buf.start;
+    }
+    else
+    {
+        new_ptr = ringbuf->in_ptr + 1;
+    }
+
 #if defined(RINGBUF_THREAD_SAFE)
     pthread_mutex_lock(&ringbuf->inptr_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 
-    const char *min_addr = ringbuf->buf.start;
-    const char *max_addr = &ringbuf->buf.start[ringbuf->buf.size - 1];
-    if (byte_ptr >= min_addr && byte_ptr <= max_addr)
-    {
-        ringbuf->in_ptr = byte_ptr;
-    }
+    ringbuf->in_ptr = new_ptr;
+
 #if defined(RINGBUF_THREAD_SAFE)
     pthread_mutex_unlock(&ringbuf->inptr_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 }
 
 
-static void ringbuf_set_outptr_internal(ringbuf_t ringbuf, char *byte_ptr)
+static void ringbuf_inc_outptr_SAFE(struct ringbuf *ringbuf)
 {
+    uint8_t *new_ptr;
+    if ((ringbuf->out_ptr - ringbuf->buf.start) == ringbuf->buf.size)
+    {
+        new_ptr = ringbuf->buf.start;
+    }
+    else
+    {
+        new_ptr = ringbuf->out_ptr + 1;
+    }
+
 #if defined(RINGBUF_THREAD_SAFE)
     pthread_mutex_lock(&ringbuf->outptr_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 
-    const char *min_addr = ringbuf->buf.start;
-    const char *max_addr = &ringbuf->buf.start[ringbuf->buf.size - 1];
-    if (byte_ptr >= min_addr && byte_ptr <= max_addr)
-    {
-        ringbuf->out_ptr = byte_ptr;
-    }
+    ringbuf->out_ptr = new_ptr;
 
 #if defined(RINGBUF_THREAD_SAFE)
     pthread_mutex_unlock(&ringbuf->outptr_lock);
@@ -276,66 +284,11 @@ static void ringbuf_set_outptr_internal(ringbuf_t ringbuf, char *byte_ptr)
 }
 
 
-static char *ringbuf_get_outptr_internal(ringbuf_t ringbuf)
+static void ringbuf_inc_bcnt_SAFE(struct ringbuf *ringbuf)
 {
-#if defined(RINGBUF_THREAD_SAFE)
-    pthread_mutex_lock(&ringbuf->outptr_lock);
-#endif /* #if defined(RINGBUF_THREAD_SAFE) */
-
-    char *byte_ptr = ringbuf->out_ptr;
 
 #if defined(RINGBUF_THREAD_SAFE)
-    pthread_mutex_unlock(&ringbuf->outptr_lock);
-#endif /* #if defined(RINGBUF_THREAD_SAFE) */
-    return byte_ptr;
-}
-
-static char *ringbuf_get_inptr_internal(ringbuf_t ringbuf)
-{
-#if defined(RINGBUF_THREAD_SAFE)
-    pthread_mutex_lock(&ringbuf->inptr_lock);
-#endif /* #if defined(RINGBUF_THREAD_SAFE) */
-
-    char *byte_ptr = ringbuf->in_ptr;
-
-#if defined(RINGBUF_THREAD_SAFE)
-    pthread_mutex_unlock(&ringbuf->inptr_lock);
-#endif /* #if defined(RINGBUF_THREAD_SAFE) */
-    return byte_ptr;
-}
-
-static void ringbuf_inc_inptr_internal(ringbuf_t ringbuf)
-{
-    char *inptr = ringbuf_get_inptr_internal(ringbuf);
-    if ((inptr - ringbuf->buf.start) == ringbuf->buf.size)
-    {
-        ringbuf_set_inptr_internal(ringbuf, ringbuf->buf.start);
-    }
-    else
-    {
-        ringbuf_set_inptr_internal(ringbuf, inptr + 1);
-    }
-}
-
-
-static void ringbuf_inc_outptr_internal(ringbuf_t ringbuf)
-{
-    char *outptr = ringbuf_get_outptr_internal(ringbuf);
-    if ((outptr - ringbuf->buf.start) == ringbuf->buf.size)
-    {
-        ringbuf_set_outptr_internal(ringbuf, ringbuf->buf.start);
-    }
-    else
-    {
-        ringbuf_set_outptr_internal(ringbuf, outptr + 1);
-    }
-}
-
-
-static void ringbuf_inc_bcnt_internal(ringbuf_t ringbuf)
-{
-#if defined(RINGBUF_THREAD_SAFE)
-    pthread_mutex_lock(&ringbuf->bcnt_lock);
+    pthread_mutex_val_lock(&ringbuf->bcnt_val_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 
     if (ringbuf->bcnt < ringbuf->buf.size)
@@ -344,15 +297,16 @@ static void ringbuf_inc_bcnt_internal(ringbuf_t ringbuf)
     }
 
 #if defined(RINGBUF_THREAD_SAFE)
-    pthread_mutex_unlock(&ringbuf->bcnt_lock);
+    pthread_mutex_unlock(&ringbuf->bcnt_val_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 }
 
 
-static void ringbuf_dec_bcnt_internal(ringbuf_t ringbuf)
+static void ringbuf_dec_bcnt_SAFE(struct ringbuf *ringbuf)
 {
+
 #if defined(RINGBUF_THREAD_SAFE)
-    pthread_mutex_lock(&ringbuf->bcnt_lock);
+    pthread_mutex_val_lock(&ringbuf->bcnt_val_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 
     if (ringbuf->bcnt > 0)
@@ -361,22 +315,22 @@ static void ringbuf_dec_bcnt_internal(ringbuf_t ringbuf)
     }
 
 #if defined(RINGBUF_THREAD_SAFE)
-    pthread_mutex_unlock(&ringbuf->bcnt_lock);
+    pthread_mutex_unlock(&ringbuf->bcnt_val_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 }
 
 
-static size_t ringbuf_peek_bcnt_internal(ringbuf_t ringbuf)
+static size_t ringbuf_peek_bcnt_SAFE(struct ringbuf *ringbuf)
 {
     size_t bcnt;
 #if defined(RINGBUF_THREAD_SAFE)
-    pthread_mutex_lock(&ringbuf->bcnt_lock);
+    pthread_mutex_val_lock(&ringbuf->bcnt_val_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 
     bcnt = ringbuf->bcnt;
 
 #if defined(RINGBUF_THREAD_SAFE)
-    pthread_mutex_unlock(&ringbuf->bcnt_lock);
+    pthread_mutex_unlock(&ringbuf->bcnt_val_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 
     return bcnt;
@@ -384,38 +338,54 @@ static size_t ringbuf_peek_bcnt_internal(ringbuf_t ringbuf)
 
 
 #if !defined(RINGBUF_INPUT_OVERRUN)
-static bool ringbuf_is_full_internal(ringbuf_t ringbuf)
+static bool ringbuf_is_full_SAFE(struct ringbuf *ringbuf)
 {
     bool   is_full = false;
-    size_t bcnt    = ringbuf_peek_bcnt_internal(ringbuf);
-    if (bcnt == ringbuf->buf.size)
+    size_t bcnt    = ringbuf_peek_bcnt_SAFE(ringbuf);
+    if (bcnt == ringbuf->buf.size && ringbuf_ptr_equal_SAFE(ringbuf))
     {
         is_full = true;
-
-#if defined(DEBUG)
-        char *inptr  = ringbuf_get_inptr_internal(ringbuf);
-        char *outptr = ringbuf_get_outptr_internal(ringbuf);
-        assert(inptr == outptr);
-#endif /* #if defined(DEBUG) */
     }
     return is_full;
 }
 #endif /* #if !defined(RINGBUF_INPUT_OVERRUN) */
 
 
-static bool ringbuf_is_empty_internal(ringbuf_t ringbuf)
+static bool ringbuf_is_empty_SAFE(struct ringbuf *ringbuf)
 {
     bool   is_empty = false;
-    size_t bcnt     = ringbuf_peek_bcnt_internal(ringbuf);
-    if (bcnt == 0)
+    size_t bcnt     = ringbuf_peek_bcnt_SAFE(ringbuf);
+    if (bcnt == 0 && ringbuf_ptr_equal_SAFE(ringbuf))
     {
         is_empty = true;
-
-#if defined(DEBUG)
-        char *inptr  = ringbuf_get_inptr_internal(ringbuf);
-        char *outptr = ringbuf_get_outptr_internal(ringbuf);
-        assert(inptr == outptr);
-#endif /* #if defined(DEBUG) */
     }
     return is_empty;
+}
+
+static bool ringbuf_ptr_equal_SAFE(struct ringbuf *ringbuf)
+{
+    char *inptr;
+    char *outptr;
+
+#if defined(RINGBUF_THREAD_SAFE)
+    pthread_mutex_lock(&ringbuf->outptr_lock);
+#endif /* #if defined(RINGBUF_THREAD_SAFE) */
+
+    outptr = ringbuf->out_ptr;
+
+#if defined(RINGBUF_THREAD_SAFE)
+    pthread_mutex_unlock(&ringbuf->outptr_lock);
+#endif /* #if defined(RINGBUF_THREAD_SAFE) */
+
+#if defined(RINGBUF_THREAD_SAFE)
+    pthread_mutex_lock(&ringbuf->inptr_lock);
+#endif /* #if defined(RINGBUF_THREAD_SAFE) */
+
+    inptr = ringbuf->in_ptr;
+
+#if defined(RINGBUF_THREAD_SAFE)
+    pthread_mutex_unlock(&ringbuf->inptr_lock);
+#endif /* #if defined(RINGBUF_THREAD_SAFE) */
+
+    return inptr == outptr;
 }

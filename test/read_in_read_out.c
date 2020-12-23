@@ -20,11 +20,9 @@
 
 int main(int argc, char **argv)
 {
-    ringbuf_t ringbuf = ringbuf_ctor(2000);
-    assert(ringbuf != NULL);
-
-    char *input_buf  = (char *)malloc(TEST_BUF_SIZE);
-    char *output_buf = (char *)malloc(TEST_BUF_SIZE);
+    buffer_handle ringbuf    = bufferlib_ringbuf(TEST_BUF_SIZE);
+    char *        input_buf  = (char *)malloc(TEST_BUF_SIZE);
+    char *        output_buf = (char *)malloc(TEST_BUF_SIZE);
     assert(input_buf != NULL);
     assert(output_buf != NULL);
     memset(input_buf, 0, TEST_BUF_SIZE);
@@ -35,20 +33,25 @@ int main(int argc, char **argv)
     int i;
     for (i = 0; i < sizeof(TEST_MSG); i++)
     {
-        ringbuf_write_next_byte(ringbuf, input_buf[i]);
+        ringbuf.write_next(ringbuf.this, input_buf[i]);
     }
 
     for (i = 0; i < sizeof(TEST_MSG); i++)
     {
-        char *next = ringbuf_read_next(ringbuf);
-        assert(NULL != next);
-        output_buf[i] = *next;
+        int byte_written = ringbuf.read_next(ringbuf.this);
+        if (byte_written != BUFFERLIB_WRITE_FAILURE)
+        {
+            output_buf[i] = (char)byte_written;
+        }
+        else
+        {
+            break;
+        }
     }
 
     assert(0 == strcmp(input_buf, output_buf));
 
-
-    ringbuf_dtor(ringbuf);
+    ringbuf.deinit;
     free(input_buf);
     free(output_buf);
     return 0;

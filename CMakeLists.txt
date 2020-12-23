@@ -63,7 +63,6 @@ endforeach(hdr ${${LIB}_private_headers})
 list(REMOVE_DUPLICATES ${LIB}_private_include_directories)
 target_include_directories(${LIB} PRIVATE ${${LIB}_private_include_directories})
 
-
 ################################################################################
 # DETECT PUBLIC HEADERS RECURSIVELY FROM inc FOLDER
 ################################################################################

@@ -8,14 +8,22 @@ extern "C"
 #endif /* Start C linkage */
 
 #include <stdlib.h>
+#include <stdint.h>
+#include <limits.h>
+
+/* read and write functions return the value of the byte just read/written */
+/* thus, failure values need to be something that a byte cannot represent  */
+#define BUFFERLIB_READ_FAILURE ((int)(UINT8_MAX + 1))
+#define BUFFERLIB_WRITE_FAILURE ((int)(UINT8_MAX + 1))
+
 
 typedef void *buffer_instance_handle;
-typedef struct
+typedef struct buffer_handle
 {
-    buffer_instance_handle instance;
-    char *(*read_next)(buffer_instance_handle);
-    char *(*write_next)(buffer_instance_handle);
-    void (*init)(buffer_instance_handle);
+    buffer_instance_handle this;
+    int (*read_next)(buffer_instance_handle);
+    int (*write_next)(buffer_instance_handle, char);
+    size_t (*size)(buffer_instance_handle);
     void (*deinit)(buffer_instance_handle);
 } buffer_handle;
 

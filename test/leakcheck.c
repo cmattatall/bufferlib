@@ -13,7 +13,7 @@
 
 int main(void)
 {
-    ringbuf_t ringbuf = ringbuf_ctor(2000);
-    ringbuf_dtor(ringbuf);
+    buffer_handle ringbuf = bufferlib_ringbuf(2000);
+    ringbuf.deinit(ringbuf.this);
     return 0;
 }

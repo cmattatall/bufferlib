@@ -13,9 +13,9 @@ extern "C"
 /* uncomment this to allow overwrite when input wraps */
 //      #define RINGBUF_INPUT_OVERRUN
 
+#include "bufferlib.h"
 #include "fat_pointer.h"
 
-typedef struct ringbuf_struct *ringbuf_t;
 
 
 /**
@@ -24,7 +24,7 @@ typedef struct ringbuf_struct *ringbuf_t;
  * @param size size of ring buffer
  * @return ringbuf_t buffer handle
  */
-ringbuf_t ringbuf_ctor(size_t size);
+buffer_instance_handle ringbuf_ctor(size_t size);
 
 
 /**
@@ -32,7 +32,7 @@ ringbuf_t ringbuf_ctor(size_t size);
  *
  * @param ringbuf buffer handle
  */
-void ringbuf_dtor(ringbuf_t ringbuf);
+void ringbuf_dtor(buffer_instance_handle this);
 
 
 /**
@@ -45,7 +45,7 @@ void ringbuf_dtor(ringbuf_t ringbuf);
  * @note reading from the ring buffer advances the outptr
  * @note thread safe
  */
-char *ringbuf_read_next(ringbuf_t ringbuf);
+int ringbuf_read_next(buffer_instance_handle this);
 
 
 /**
@@ -57,8 +57,16 @@ char *ringbuf_read_next(ringbuf_t ringbuf);
  * @note thread safe
  * @note Will overwrite data
  */
-void ringbuf_write_next_byte(ringbuf_t ringbuf, char byte);
+int ringbuf_write_next(buffer_instance_handle this, char byte);
 
+
+/**
+ * @brief get the buffer size
+ *
+ * @param this buffer handle
+ * @return size_t size of buffer
+ */
+size_t ringbuf_size(buffer_instance_handle this);
 
 #ifdef __cplusplus
 /* clang-format off */
