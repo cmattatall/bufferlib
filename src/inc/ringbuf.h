@@ -13,7 +13,7 @@ extern "C"
 /* uncomment this to allow overwrite when input wraps */
 //      #define RINGBUF_INPUT_OVERRUN
 
-#include "fat_array.h"
+#include "fat_pointer.h"
 
 typedef struct ringbuf_struct *ringbuf_t;
 

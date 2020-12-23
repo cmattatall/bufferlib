@@ -22,10 +22,10 @@
 
 struct ringbuf_struct
 {
-    char *           in_ptr;
-    char *           out_ptr;
-    size_t           bcnt; /* needed for overlap edgecase handling */
-    struct fat_array buf;
+    char *             in_ptr;
+    char *             out_ptr;
+    size_t             bcnt; /* needed for overlap edgecase handling */
+    struct fat_pointer buf;
 #if defined(RINGBUF_THREAD_SAFE)
     pthread_mutex_t inptr_lock;
     pthread_mutex_t outptr_lock;
