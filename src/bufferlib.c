@@ -30,7 +30,7 @@ buffer_handle bufferlib_ringbuf(unsigned int size)
     }
     else /* Instead of silent integer overflow, we explitly fail */
     {
-        memcpy(&handle, NULL, sizeof(handle));
+        memcpy(&handle, 0, sizeof(handle));
     }
     return handle;
 }
