@@ -18,7 +18,7 @@ foreach(src ${test_sources})
         target_link_libraries(${test_name} PRIVATE ${LIB})
         add_test(
             NAME ${test_name}
-            COMMAND valgrind ./${test_name}
+            COMMAND valgrind ${CMAKE_RUNTIME_OUTPUT_DIR}/${test_name}
             --build-generator "${CMAKE_GENERATOR}"
             --test-command "${CMAKE_CTEST_COMMAND}"
         ) 
