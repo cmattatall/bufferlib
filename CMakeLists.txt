@@ -40,6 +40,7 @@ add_library(${LIB})
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 file(GLOB_RECURSE ${LIB}_sources "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c")
 target_sources(${LIB} PRIVATE ${${LIB}_sources})
+target_compile_options(${LIB} PRIVATE "-Wall")
 
 
 ################################################################################
