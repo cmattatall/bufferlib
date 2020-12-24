@@ -101,11 +101,15 @@ static void pingbuf_dtor_internal(buffer_instance_handle *this)
 
 
 int pingbuf_read_next(buffer_instance_handle this)
-{}
+{
+    return BUFFERLIB_READ_FAILURE;
+}
 
 
 int pingbuf_write_next(buffer_instance_handle this, char byte)
-{}
+{
+    return BUFFERLIB_WRITE_FAILURE;
+}
 
 
 unsigned int pingbuf_size(buffer_instance_handle this)
