@@ -9,8 +9,9 @@
  *
  * @note
  */
-
-#include <string.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <string.h> /* memcpy */
 
 #include "bufferlib.h"
 #include "ringbuf.h"
@@ -19,10 +20,17 @@
 buffer_handle bufferlib_ringbuf(unsigned int size)
 {
     buffer_handle handle;
-    handle.this       = ringbuf_ctor(size);
-    handle.size       = &ringbuf_size;
-    handle.read_next  = &ringbuf_read_next;
-    handle.write_next = &ringbuf_write_next;
-    handle.delete     = &ringbuf_dtor;
+    if (size <= UINT_MAX)
+    {
+        handle.this       = ringbuf_ctor(size);
+        handle.size       = &ringbuf_size;
+        handle.read_next  = &ringbuf_read_next;
+        handle.write_next = &ringbuf_write_next;
+        handle.delete     = &ringbuf_dtor;
+    }
+    else /* Instead of silent integer overflow, we explitly fail */
+    {
+        memcpy(&handle, NULL, sizeof(handle));
+    }
     return handle;
 }

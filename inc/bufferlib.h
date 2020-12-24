@@ -37,6 +37,13 @@ typedef struct buffer_handle
 } buffer_handle;
 
 
+/**
+ * @brief Construct a bufferlib handle that uses a ringbuf implementation
+ *
+ * @param size desired size of the buffer in bytes
+ * @return buffer_handle on constructor success, otherwise, bufferhandle
+ * initialized with NULL
+ */
 buffer_handle bufferlib_ringbuf(unsigned int size);
 
 #ifdef __cplusplus
