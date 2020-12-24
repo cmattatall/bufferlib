@@ -1,7 +1,4 @@
-# @brief CMAKE LIBRARY PROJECT TEMPLATE
 # @author Carl Mattatall (cmattatall2@gmail.com)
-
-cmake_minimum_required(VERSION 3.16)
 # THE NAME OF THE CMAKE PROJECT IS 
 # DETERMINED BY THE NAME OF ITS CONTAINING FOLDER
 #
@@ -11,13 +8,15 @@ cmake_minimum_required(VERSION 3.16)
 # add_subdirectory(>NAME_OF_THE_PROJECT_DIRECTORY<)
 # target_link_libraries(TARGET_TO_LINK_INTO [PUBLIC/PRIVATE/INTERFACE] >NAME_OF_PROJECT_DIRECTORY<)
 #
+cmake_minimum_required(VERSION 3.16)
+
 get_filename_component(MY_PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 ################################################################################
 #  OPTIONS GO HERE
 ################################################################################
-option(BUILD_TESTING "[ON/OFF] Boolean to choose to cross compile or not" OFF)
-option(CMAKE_CROSSCOMPILING "[ON/OFF] choose to cross compile or not" OFF)
+option(BUILD_TESTING "[ON/OFF] Option to build tests or not" OFF)
+option(BUILD_THREAD_SAFE "[ON/OFF]")
 
 project(
     "${MY_PROJECT_NAME}"
@@ -77,9 +76,6 @@ endforeach(hdr ${${LIB}_public_headers})
 list(REMOVE_DUPLICATES ${LIB}_public_include_directories)
 target_include_directories(${LIB} PUBLIC ${${LIB}_public_include_directories})
 
-
-
-
 ################################################################################
 # TEST CONFIGURATION
 ################################################################################
@@ -102,29 +98,31 @@ endif()
 
 
 ######################################
-# EXAMPLE OF LINKINAG AGAINST PTHREAD
+# LINK AGAINST PTHREAD
 ######################################
-
-#   find_package(Threads REQUIRED)
-#   if(Threads_FOUND) 
-#       if(WIN32)
-#           if(CMAKE_USE_WIN32_THREADS_INIT)
-#               target_link_libraries(${LIB} PUBLIC pthread)
-#               target_compile_options(${LIB} PUBLIC "-lpthread")
-#           else()
-#               message(FATAL_ERROR "BLAHHH ")
-#           endif()
-#       elseif(UNIX)
-#           if(CMAKE_USE_PTHREADS_INIT)
-#               target_link_libraries(${LIB} PUBLIC pthread)
-#               target_compile_options(${LIB} PUBLIC "-lpthread")
-#           else()
-#               message(FATAL_ERROR "BLAHHH ")
-#           endif()
-#       endif()
-#   else()
-#       message(FATAL_ERROR "No threading libraries have been found. Aborting!")
-#   endif()
+if(BUILD_THREAD_SAFE)
+    target_compile_definitions(${LIB} PRIVATE "BUFFERLIB_THREAD_SAFE")
+    find_package(Threads REQUIRED)
+    if(Threads_FOUND) 
+        if(WIN32)
+            if(CMAKE_USE_WIN32_THREADS_INIT)
+                target_link_libraries(${LIB} PUBLIC pthread)
+                target_compile_options(${LIB} PUBLIC "-lpthread")
+            else()
+                message(FATAL_ERROR "Could not find win32 threads")
+            endif()
+        elseif(UNIX)
+            if(CMAKE_USE_PTHREADS_INIT)
+                target_link_libraries(${LIB} PUBLIC pthread)
+                target_compile_options(${LIB} PUBLIC "-lpthread")
+            else()
+                message(FATAL_ERROR "Could not find pthreads")
+            endif()
+        endif()
+    else()
+        message(FATAL_ERROR "No threading libraries have been found. Aborting!")
+    endif()
+endif(BUILD_THREAD_SAFE)
 
 
 

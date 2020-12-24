@@ -179,7 +179,7 @@ static void ringbuf_write_inptr_SAFE(ringbuf_t *ringbuf, char byte)
 {
 
 #if defined(RINGBUF_THREAD_SAFE)
-    pthread_mutex_val_lock(&ringbuf->inptr_val_lock);
+    pthread_mutex_lock(&ringbuf->inptr_val_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 
     *ringbuf->in_ptr = byte;
@@ -194,7 +194,7 @@ static void ringbuf_write_outptr_SAFE(ringbuf_t *ringbuf, char byte)
 {
 
 #if defined(RINGBUF_THREAD_SAFE)
-    pthread_mutex_val_lock(&ringbuf->outptr_val_lock);
+    pthread_mutex_lock(&ringbuf->outptr_val_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 
     *ringbuf->out_ptr = byte;
@@ -209,7 +209,7 @@ static char ringbuf_read_outptr_SAFE(ringbuf_t *ringbuf)
 {
 
 #if defined(RINGBUF_THREAD_SAFE)
-    pthread_mutex_val_lock(&ringbuf->outptr_val_lock);
+    pthread_mutex_lock(&ringbuf->outptr_val_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 
     char byte = *ringbuf->out_ptr;
@@ -225,7 +225,7 @@ static char ringbuf_read_inptr_SAFE(ringbuf_t *ringbuf)
 {
 
 #if defined(RINGBUF_THREAD_SAFE)
-    pthread_mutex_val_lock(&ringbuf->inptr_val_lock);
+    pthread_mutex_lock(&ringbuf->inptr_val_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 
     char byte = *ringbuf->in_ptr;
@@ -290,7 +290,7 @@ static void ringbuf_inc_bcnt_SAFE(ringbuf_t *ringbuf)
 {
 
 #if defined(RINGBUF_THREAD_SAFE)
-    pthread_mutex_val_lock(&ringbuf->bcnt_val_lock);
+    pthread_mutex_lock(&ringbuf->bcnt_val_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 
     if (ringbuf->bcnt < ringbuf->buf.size)
@@ -308,7 +308,7 @@ static void ringbuf_dec_bcnt_SAFE(ringbuf_t *ringbuf)
 {
 
 #if defined(RINGBUF_THREAD_SAFE)
-    pthread_mutex_val_lock(&ringbuf->bcnt_val_lock);
+    pthread_mutex_lock(&ringbuf->bcnt_val_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 
     if (ringbuf->bcnt > 0)
@@ -326,7 +326,7 @@ static unsigned int ringbuf_peek_bcnt_SAFE(ringbuf_t *ringbuf)
 {
     unsigned int bcnt;
 #if defined(RINGBUF_THREAD_SAFE)
-    pthread_mutex_val_lock(&ringbuf->bcnt_val_lock);
+    pthread_mutex_lock(&ringbuf->bcnt_val_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 
     bcnt = ringbuf->bcnt;
