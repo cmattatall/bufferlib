@@ -30,7 +30,11 @@ buffer_handle bufferlib_ringbuf(unsigned int size)
     }
     else /* Instead of silent integer overflow, we explitly fail */
     {
-        memcpy(&handle, 0, sizeof(handle));
+        handle.this       = NULL;
+        handle.size       = NULL;
+        handle.read_next  = NULL;
+        handle.write_next = NULL;
+        handle.delete     = NULL;
     }
     return handle;
 }
