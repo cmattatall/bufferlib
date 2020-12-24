@@ -17,7 +17,7 @@ extern "C"
  * @param size size of ring buffer
  * @return buffer_instance_handle buffer handle
  */
-buffer_instance_handle pingbuf_ctor(size_t size);
+buffer_instance_handle pingbuf_ctor(unsigned int size);
 
 
 /**
@@ -57,9 +57,9 @@ int pingbuf_write_next(buffer_instance_handle this, char byte);
  * @brief get the buffer size
  *
  * @param this buffer handle
- * @return size_t size of buffer
+ * @return unsigned int size of buffer
  */
-size_t pingbuf_size(buffer_instance_handle this);
+unsigned int pingbuf_size(buffer_instance_handle this);
 
 #ifdef __cplusplus
 /* clang-format off */

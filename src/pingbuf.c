@@ -20,17 +20,17 @@
 
 struct pingbuf
 {
-    size_t             bank_idx;
-    size_t             bank_cnt;
+    unsigned int       bank_idx;
+    unsigned int       bank_cnt;
     char *             in_ptr;
     char *             out_ptr;
-    size_t             bcnt;
-    size_t             total_size;
+    unsigned int       bcnt;
+    unsigned int       total_size;
     struct fat_pointer buf[2];
 };
 
 
-buffer_instance_handle pingbuf_ctor(size_t size)
+buffer_instance_handle pingbuf_ctor(unsigned int size)
 {
     /**
      * Honestly, an N-bank pingpong buffer is really just a ring buffer
@@ -42,7 +42,7 @@ buffer_instance_handle pingbuf_ctor(size_t size)
 }
 
 
-buffer_instance_handle pingbuf_ctor_internal(size_t size)
+buffer_instance_handle pingbuf_ctor_internal(unsigned int size)
 {
     buffer_instance_handle handle;
     if (size < PINGBUF_BANK_COUNT)
@@ -57,10 +57,10 @@ buffer_instance_handle pingbuf_ctor_internal(size_t size)
         pingbuf->bcnt     = 0;
         pingbuf->bank_cnt = PINGBUF_BANK_COUNT; /* for now, we use PP def */
 
-        size_t remainder      = size % pingbuf->bank_cnt;
-        size_t bank_size      = (size - remainder) / pingbuf->bank_cnt;
-        size_t bank0_size     = bank_size + remainder;
-        pingbuf->buf[0].start = malloc(bank0_size);
+        unsigned int remainder  = size % pingbuf->bank_cnt;
+        unsigned int bank_size  = (size - remainder) / pingbuf->bank_cnt;
+        unsigned int bank0_size = bank_size + remainder;
+        pingbuf->buf[0].start   = malloc(bank0_size);
         assert(pingbuf->buf[0].start != NULL);
         memset(pingbuf->buf[0].start, 0, bank0_size);
 
@@ -108,7 +108,7 @@ int pingbuf_write_next(buffer_instance_handle this, char byte)
 {}
 
 
-size_t pingbuf_size(buffer_instance_handle this)
+unsigned int pingbuf_size(buffer_instance_handle this)
 {
     struct pingbuf *pingbuf = this;
     return pingbuf->total_size;

@@ -7,13 +7,22 @@
  *
  * @copyright Copyright (c) 2020
  *
- * @note THIS SHOULD BE RUN THROUGH VALGRIND
+ * @note THIS SHOULD BE RUN THROUGH VALGRIND or another memory checker
  */
+#include <limits.h>
+
 #include "bufferlib.h"
 
 int main(void)
 {
-    buffer_handle ringbuf = bufferlib_ringbuf(10);
-    ringbuf.delete(ringbuf.this);
+    unsigned int size;
+    /* I want to run it up to UINT_MAX but that takes EONS.
+     * could be part of a CI script eventually
+     */
+    for (size = 0; size < 2000; size++)
+    {
+        buffer_handle ringbuf = bufferlib_ringbuf(size);
+        ringbuf.delete(ringbuf.this);
+    }
     return 0;
 }

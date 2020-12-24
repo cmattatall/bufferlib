@@ -11,6 +11,15 @@ extern "C"
 #include <stdint.h>
 #include <limits.h>
 
+
+/**********************************************************
+ ** @CONFIGURABLE:
+ ** uncomment this to enable thread safety
+ **********************************************************
+ */
+//          #define BUFFERLIB_THREAD_SAFE
+
+
 /* read and write functions return the value of the byte just read/written */
 /* thus, failure values need to be something that a byte cannot represent  */
 #define BUFFERLIB_READ_FAILURE ((int)(UINT8_MAX + 1))
@@ -23,12 +32,12 @@ typedef struct buffer_handle
     buffer_instance_handle this;
     int (*read_next)(buffer_instance_handle);
     int (*write_next)(buffer_instance_handle, char);
-    size_t (*size)(buffer_instance_handle);
-    void (*delete)(buffer_instance_handle*);
+    unsigned int (*size)(buffer_instance_handle);
+    void (*delete)(buffer_instance_handle);
 } buffer_handle;
 
 
-buffer_handle bufferlib_ringbuf(size_t size);
+buffer_handle bufferlib_ringbuf(unsigned int size);
 
 #ifdef __cplusplus
 /* clang-format off */

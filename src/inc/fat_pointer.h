@@ -11,8 +11,8 @@ extern "C"
 
 struct fat_pointer
 {
-    char * start;
-    size_t size;
+    char *       start;
+    unsigned int size;
 };
 
 

@@ -7,15 +7,21 @@ extern "C"
 /* clang-format on */
 #endif /* Start C linkage */
 
-/* uncomment this to enable protection of shared variables */
-//      #define RINGBUF_THREAD_SAFE
-
-/* uncomment this to allow overwrite when input wraps */
-//      #define RINGBUF_INPUT_OVERRUN
-
 #include "bufferlib.h"
-#include "fat_pointer.h"
 
+#if defined(BUFFERLIB_THREAD_SAFE)
+#define RINGBUF_THREAD_SAFE
+#endif /* #if defined(BUFFERLIB_THREAD_SAFE) */
+
+/**********************************************************
+ ** @CONFIGURABLE:                                       **
+ ** uncomment this to allow overwrite when input wraps   **
+ **********************************************************
+ */
+//          #define RINGBUF_INPUT_OVERRUN
+
+
+#include "fat_pointer.h"
 
 /**
  * @brief ringbuf constructor
@@ -23,15 +29,15 @@ extern "C"
  * @param size size of ring buffer
  * @return ringbuf_t buffer handle
  */
-buffer_instance_handle ringbuf_ctor(size_t size);
+buffer_instance_handle ringbuf_ctor(unsigned int size);
 
 
 /**
  * @brief ringbuf destructor
  *
- * @param ringbuf pointer to buffer handle
+ * @param ringbuf buffer handle
  */
-void ringbuf_dtor(buffer_instance_handle *this);
+void ringbuf_dtor(buffer_instance_handle this);
 
 
 /**
@@ -63,9 +69,9 @@ int ringbuf_write_next(buffer_instance_handle this, char byte);
  * @brief get the buffer size
  *
  * @param this buffer handle
- * @return size_t size of buffer
+ * @return unsigned int size of buffer
  */
-size_t ringbuf_size(buffer_instance_handle this);
+unsigned int ringbuf_size(buffer_instance_handle this);
 
 #ifdef __cplusplus
 /* clang-format off */

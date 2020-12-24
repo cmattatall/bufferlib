@@ -25,7 +25,7 @@ typedef struct
 {
     char *             in_ptr;
     char *             out_ptr;
-    size_t             bcnt; /* needed for overlap edgecase handling */
+    unsigned int       bcnt; /* needed for overlap edgecase handling */
     struct fat_pointer buf;
 #if defined(RINGBUF_THREAD_SAFE)
     pthread_mutex_t inptr_val_lock;
@@ -36,16 +36,16 @@ typedef struct
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 } ringbuf_t;
 
-static void   ringbuf_write_inptr_SAFE(ringbuf_t *ringbuf, char byte);
-static void   ringbuf_write_outptr_SAFE(ringbuf_t *ringbuf, char byte);
-static char   ringbuf_read_outptr_SAFE(ringbuf_t *ringbuf);
-static char   ringbuf_read_inptr_SAFE(ringbuf_t *ringbuf);
-static void   ringbuf_inc_inptr_SAFE(ringbuf_t *ringbuf);
-static void   ringbuf_inc_outptr_SAFE(ringbuf_t *ringbuf);
-static void   ringbuf_inc_bcnt_SAFE(ringbuf_t *ringbuf);
-static void   ringbuf_dec_bcnt_SAFE(ringbuf_t *ringbuf);
-static size_t ringbuf_peek_bcnt_SAFE(ringbuf_t *ringbuf);
-static bool   ringbuf_ptr_equal_SAFE(ringbuf_t *ringbuf);
+static void         ringbuf_write_inptr_SAFE(ringbuf_t *ringbuf, char byte);
+static void         ringbuf_write_outptr_SAFE(ringbuf_t *ringbuf, char byte);
+static char         ringbuf_read_outptr_SAFE(ringbuf_t *ringbuf);
+static char         ringbuf_read_inptr_SAFE(ringbuf_t *ringbuf);
+static void         ringbuf_inc_inptr_SAFE(ringbuf_t *ringbuf);
+static void         ringbuf_inc_outptr_SAFE(ringbuf_t *ringbuf);
+static void         ringbuf_inc_bcnt_SAFE(ringbuf_t *ringbuf);
+static void         ringbuf_dec_bcnt_SAFE(ringbuf_t *ringbuf);
+static unsigned int ringbuf_peek_bcnt_SAFE(ringbuf_t *ringbuf);
+static bool         ringbuf_ptr_equal_SAFE(ringbuf_t *ringbuf);
 
 
 #if !defined(RINGBUF_INPUT_OVERRUN)
@@ -63,7 +63,7 @@ static bool ringbuf_is_full_SAFE(ringbuf_t *ringbuf);
 static bool ringbuf_is_empty_SAFE(ringbuf_t *ringbuf);
 
 
-buffer_instance_handle ringbuf_ctor(size_t size)
+buffer_instance_handle ringbuf_ctor(unsigned int size)
 {
     ringbuf_t *ringbuf = malloc(sizeof(*ringbuf));
     assert(ringbuf != NULL);
@@ -88,11 +88,11 @@ buffer_instance_handle ringbuf_ctor(size_t size)
     return (buffer_instance_handle)ringbuf;
 }
 
-void ringbuf_dtor(buffer_instance_handle *this)
+void ringbuf_dtor(buffer_instance_handle this)
 {
-    if (*this != NULL)
+    if (this != NULL)
     {
-        ringbuf_t *ringbuf = *this;
+        ringbuf_t *ringbuf = this;
         free(ringbuf->buf.start);
 #if defined(RINGBUF_THREAD_SAFE)
         pthread_mutex_destroy(&ringbuf->inptr_val_lock);
@@ -102,7 +102,6 @@ void ringbuf_dtor(buffer_instance_handle *this)
         pthread_mutex_destroy(&ringbuf->inptr_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
         free(ringbuf);
-        *this = NULL;
     }
 }
 
@@ -162,7 +161,7 @@ int ringbuf_write_next(buffer_instance_handle this, char byte)
 }
 
 
-size_t ringbuf_size(buffer_instance_handle this)
+unsigned int ringbuf_size(buffer_instance_handle this)
 {
     if (this == NULL)
     {
@@ -323,9 +322,9 @@ static void ringbuf_dec_bcnt_SAFE(ringbuf_t *ringbuf)
 }
 
 
-static size_t ringbuf_peek_bcnt_SAFE(ringbuf_t *ringbuf)
+static unsigned int ringbuf_peek_bcnt_SAFE(ringbuf_t *ringbuf)
 {
-    size_t bcnt;
+    unsigned int bcnt;
 #if defined(RINGBUF_THREAD_SAFE)
     pthread_mutex_val_lock(&ringbuf->bcnt_val_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
@@ -343,8 +342,8 @@ static size_t ringbuf_peek_bcnt_SAFE(ringbuf_t *ringbuf)
 #if !defined(RINGBUF_INPUT_OVERRUN)
 static bool ringbuf_is_full_SAFE(ringbuf_t *ringbuf)
 {
-    bool   is_full = false;
-    size_t bcnt    = ringbuf_peek_bcnt_SAFE(ringbuf);
+    bool         is_full = false;
+    unsigned int bcnt    = ringbuf_peek_bcnt_SAFE(ringbuf);
     if (bcnt == ringbuf->buf.size && ringbuf_ptr_equal_SAFE(ringbuf))
     {
         is_full = true;
@@ -356,8 +355,8 @@ static bool ringbuf_is_full_SAFE(ringbuf_t *ringbuf)
 
 static bool ringbuf_is_empty_SAFE(ringbuf_t *ringbuf)
 {
-    bool   is_empty = false;
-    size_t bcnt     = ringbuf_peek_bcnt_SAFE(ringbuf);
+    bool         is_empty = false;
+    unsigned int bcnt     = ringbuf_peek_bcnt_SAFE(ringbuf);
     if (bcnt == 0 && ringbuf_ptr_equal_SAFE(ringbuf))
     {
         is_empty = true;
