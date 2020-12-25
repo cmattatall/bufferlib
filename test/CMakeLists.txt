@@ -3,9 +3,6 @@
 # 
 # THUS, A TEST SHOULD BE SIMPLE, SINGLE SOURCE FILE with a mainline
 # intended to test a very specific feature
-
-
-
 cmake_minimum_required(VERSION 3.18)
 file(GLOB test_sources "${CMAKE_CURRENT_SOURCE_DIR}/*.c")
 
@@ -18,7 +15,12 @@ foreach(src ${test_sources})
         add_executable(${test_name})
         target_sources(${test_name} PRIVATE ${src})
         target_link_libraries(${test_name} PRIVATE ${LIB})
-        get_filename_component(test_dir ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+
+        if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+            get_filename_component(test_dir ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+        else()
+            set(test_dir ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})        
+        endif(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
         add_test(
             NAME ${test_name}
             COMMAND valgrind ${test_dir}/${test_name}
