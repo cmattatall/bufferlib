@@ -3,7 +3,7 @@
 # 
 # THUS, A TEST SHOULD BE SIMPLE, SINGLE SOURCE FILE with a mainline
 # intended to test a very specific feature
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.16)
 file(GLOB test_sources "${CMAKE_CURRENT_SOURCE_DIR}/*.c")
 
 foreach(src ${test_sources})
