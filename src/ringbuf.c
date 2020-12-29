@@ -241,7 +241,7 @@ static char ringbuf_read_inptr_SAFE(ringbuf_t *ringbuf)
 static void ringbuf_inc_inptr_SAFE(ringbuf_t *ringbuf)
 {
     char *new_ptr;
-    if ((ringbuf->in_ptr - ringbuf->buf.start) == ringbuf->buf.size)
+    if ((ringbuf->in_ptr - ringbuf->buf.start) == (int)ringbuf->buf.size)
     {
         new_ptr = ringbuf->buf.start;
     }
@@ -265,7 +265,7 @@ static void ringbuf_inc_inptr_SAFE(ringbuf_t *ringbuf)
 static void ringbuf_inc_outptr_SAFE(ringbuf_t *ringbuf)
 {
     char *new_ptr;
-    if ((ringbuf->out_ptr - ringbuf->buf.start) == ringbuf->buf.size)
+    if ((ringbuf->out_ptr - ringbuf->buf.start) == (int)ringbuf->buf.size)
     {
         new_ptr = ringbuf->buf.start;
     }
