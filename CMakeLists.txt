@@ -79,34 +79,10 @@ list(REMOVE_DUPLICATES ${LIB}_public_include_directories)
 target_include_directories(${LIB} PUBLIC ${${LIB}_public_include_directories})
 
 ################################################################################
-# TEST CONFIGURATION
-################################################################################
-if(BUILD_TESTING)
-    enable_testing()
-    include(CTest)
-    if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
-        add_subdirectory(test)
-    endif(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
-else()
-    if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-        add_compile_options("-Wall")
-        add_compile_options("-Wextra")
-        enable_testing()
-        include(CTest)
-        if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
-            add_subdirectory(test)
-        endif(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
-    endif()
-endif()
-
-################################################################################
 # LINK AGAINST THE NECESSARY LIBRARIES BELOW (USER CAN START ADDING STUFF NOW)
 ################################################################################
 
-
-######################################
-# LINK AGAINST PTHREAD
-######################################
+# Pthread
 if(BUILD_THREAD_SAFE)
     target_compile_definitions(${LIB} PRIVATE "BUFFERLIB_THREAD_SAFE")
     find_package(Threads REQUIRED)
@@ -132,17 +108,23 @@ if(BUILD_THREAD_SAFE)
 endif(BUILD_THREAD_SAFE)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+################################################################################
+# TEST CONFIGURATION
+################################################################################
+if(BUILD_TESTING)
+    enable_testing()
+    include(CTest)
+    if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
+        add_subdirectory(test)
+    endif(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
+else()
+    if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+        add_compile_options("-Wall")
+        add_compile_options("-Wextra")
+        enable_testing()
+        include(CTest)
+        if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
+            add_subdirectory(test)
+        endif(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
+    endif()
+endif()
