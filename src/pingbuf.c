@@ -101,13 +101,16 @@ static void pingbuf_dtor_internal(buffer_instance_handle *this)
 
 
 int pingbuf_read_next(buffer_instance_handle this)
-{
+{   
+    (void)this;
     return BUFFERLIB_READ_FAILURE;
 }
 
 
 int pingbuf_write_next(buffer_instance_handle this, char byte)
 {
+    (void)this;
+    (void)byte;
     return BUFFERLIB_WRITE_FAILURE;
 }
 
