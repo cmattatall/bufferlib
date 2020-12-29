@@ -18,14 +18,14 @@
 #define TEST_BUF_SIZE 50
 
 
-int main(int argc, char **argv)
+int main(void)
 {
     int          status = 0;
     unsigned int size;
     for (size = 1; (status == 0) && (size < 2000); size++)
     {
         buffer_handle ringbuf = bufferlib_ringbuf(size);
-        int           i;
+        unsigned int           i;
         int           byte = '!';
         for (i = 0; (status == 0) && (i < size); i++)
         {

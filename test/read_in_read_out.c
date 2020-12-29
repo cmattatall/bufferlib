@@ -18,7 +18,7 @@
 
 #define TEST_MSG "HelloWorld"
 
-int main(int argc, char **argv)
+int main(void)
 {
     buffer_handle ringbuf    = bufferlib_ringbuf(TEST_BUF_SIZE);
     char *        input_buf  = (char *)malloc(TEST_BUF_SIZE);
@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 
     strcpy(input_buf, TEST_MSG);
 
-    int i;
+    unsigned int i;
     for (i = 0; i < sizeof(TEST_MSG); i++)
     {
         ringbuf.write_next(ringbuf.this, input_buf[i]);
