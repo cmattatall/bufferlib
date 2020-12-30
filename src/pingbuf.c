@@ -100,6 +100,7 @@ static void pingbuf_dtor_internal(buffer_instance_handle *this)
 }
 
 
+#if 0
 int pingbuf_read_next(buffer_instance_handle this)
 {   
     (void)this;
@@ -120,3 +121,4 @@ unsigned int pingbuf_size(buffer_instance_handle this)
     struct pingbuf *pingbuf = this;
     return pingbuf->total_size;
 }
+#endif
