@@ -189,6 +189,8 @@ static void ringbuf_write_inptr_SAFE(ringbuf_t *ringbuf, char byte)
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
 
 static void ringbuf_write_outptr_SAFE(ringbuf_t *ringbuf, char byte)
 {
@@ -203,6 +205,7 @@ static void ringbuf_write_outptr_SAFE(ringbuf_t *ringbuf, char byte)
     pthread_mutex_unlock(&ringbuf->outptr_val_lock);
 #endif /* #if defined(RINGBUF_THREAD_SAFE) */
 }
+#pragma GCC diagnostic pop
 
 
 static char ringbuf_read_outptr_SAFE(ringbuf_t *ringbuf)
@@ -221,6 +224,9 @@ static char ringbuf_read_outptr_SAFE(ringbuf_t *ringbuf)
     return byte;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+
 static char ringbuf_read_inptr_SAFE(ringbuf_t *ringbuf)
 {
 
@@ -236,6 +242,7 @@ static char ringbuf_read_inptr_SAFE(ringbuf_t *ringbuf)
 
     return byte;
 }
+#pragma GCC diagnostic pop
 
 
 static void ringbuf_inc_inptr_SAFE(ringbuf_t *ringbuf)
