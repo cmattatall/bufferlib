@@ -83,7 +83,9 @@ buffer_instance_handle pingbuf_ctor_internal(unsigned int size)
 }
 
 
-static void pingbuf_dtor_internal(buffer_instance_handle *this)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+static void            pingbuf_dtor_internal(buffer_instance_handle *this)
 {
     if (*this != NULL)
     {
@@ -98,6 +100,7 @@ static void pingbuf_dtor_internal(buffer_instance_handle *this)
         *this = NULL;
     }
 }
+#pragma GCC diagnostic pop
 
 
 #if 0
