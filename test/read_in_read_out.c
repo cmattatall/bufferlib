@@ -20,7 +20,7 @@
 
 int main(void)
 {
-    buffer_handle ringbuf    = bufferlib_ringbuf(TEST_BUF_SIZE);
+    buffer_handle ringbuf    = bufferlib_ringbuf_new(TEST_BUF_SIZE);
     char *        input_buf  = (char *)malloc(TEST_BUF_SIZE);
     char *        output_buf = (char *)malloc(TEST_BUF_SIZE);
     assert(input_buf != NULL);

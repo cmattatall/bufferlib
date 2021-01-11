@@ -38,7 +38,7 @@ buffer_instance_handle pingbuf_ctor(unsigned int size)
      * concurrency race conditions. Until I actually ever need an explicit
      * pingpong buffer, I'm just going to use the ring buffer implementation...
      */
-    return ringbuf_ctor(size);
+    return ringbuf_ctor_new(size);
 }
 
 

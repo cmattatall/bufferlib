@@ -63,7 +63,7 @@ static bool ringbuf_is_full_SAFE(ringbuf_t *ringbuf);
 static bool ringbuf_is_empty_SAFE(ringbuf_t *ringbuf);
 
 
-buffer_instance_handle ringbuf_ctor(unsigned int size)
+buffer_instance_handle ringbuf_ctor_new(unsigned int size)
 {
     ringbuf_t *ringbuf = malloc(sizeof(*ringbuf));
     assert(ringbuf != NULL);
@@ -87,6 +87,29 @@ buffer_instance_handle ringbuf_ctor(unsigned int size)
 
     return (buffer_instance_handle)ringbuf;
 }
+
+buffer_instance_handle ringbuf_ctor_static(uint8_t *buf, unsigned int size)
+{
+    ringbuf_t *ringbuf = NULL;
+    if (NULL != buf)
+    {
+        ringbuf->buf.start = buf;
+        ringbuf->buf.size  = size;
+        ringbuf->in_ptr    = ringbuf->buf.start;
+        ringbuf->out_ptr   = ringbuf->buf.start;
+        ringbuf->bcnt      = 0;
+
+#if defined(RINGBUF_THREAD_SAFE)
+        pthread_mutex_init(&ringbuf->inptr_val_lock, NULL);
+        pthread_mutex_init(&ringbuf->outptr_val_lock, NULL);
+        pthread_mutex_init(&ringbuf->bcnt_val_lock, NULL);
+        pthread_mutex_init(&ringbuf->inptr_lock, NULL);
+        pthread_mutex_init(&ringbuf->outptr_lock, NULL);
+#endif /* #if defined(RINGBUF_THREAD_SAFE) */
+    }
+    return (buffer_instance_handle)ringbuf;
+}
+
 
 void ringbuf_dtor(buffer_instance_handle this)
 {

@@ -7,8 +7,6 @@ extern "C"
 /* clang-format on */
 #endif /* Start C linkage */
 
-#include <stdlib.h>
-
 struct fat_pointer
 {
     char *       start;

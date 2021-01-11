@@ -20,6 +20,8 @@ extern "C"
  */
 //          #define RINGBUF_INPUT_OVERRUN
 
+#include <stdint.h>
+
 
 #include "fat_pointer.h"
 
@@ -29,8 +31,10 @@ extern "C"
  * @param size size of ring buffer
  * @return ringbuf_t buffer handle
  */
-buffer_instance_handle ringbuf_ctor(unsigned int size);
+buffer_instance_handle ringbuf_ctor_new(unsigned int size);
 
+
+buffer_instance_handle ringbuf_ctor_static(uint8_t *buf, unsigned int size);
 
 /**
  * @brief ringbuf destructor

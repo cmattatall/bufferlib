@@ -21,7 +21,7 @@ int main(void)
      */
     for (size = 0; size < 2000; size++)
     {
-        buffer_handle ringbuf = bufferlib_ringbuf(size);
+        buffer_handle ringbuf = bufferlib_ringbuf_new(size);
         ringbuf.delete(ringbuf.this);
     }
     return 0;

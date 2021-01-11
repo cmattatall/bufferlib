@@ -24,7 +24,7 @@ int main(void)
     unsigned int size;
     for (size = 1; (status == 0) && (size < 2000); size++)
     {
-        buffer_handle ringbuf = bufferlib_ringbuf(size);
+        buffer_handle ringbuf = bufferlib_ringbuf_new(size);
         unsigned int           i;
         int           byte = '!';
         for (i = 0; (status == 0) && (i < size); i++)
