@@ -93,7 +93,7 @@ buffer_instance_handle ringbuf_ctor_static(uint8_t *buf, unsigned int size)
     ringbuf_t *ringbuf = NULL;
     if (NULL != buf)
     {
-        ringbuf->buf.start = buf;
+        ringbuf->buf.start = (char *)buf;
         ringbuf->buf.size  = size;
         ringbuf->in_ptr    = ringbuf->buf.start;
         ringbuf->out_ptr   = ringbuf->buf.start;
