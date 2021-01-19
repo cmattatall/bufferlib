@@ -34,8 +34,6 @@ extern "C"
 buffer_instance_handle ringbuf_ctor_new(unsigned int size);
 
 
-buffer_instance_handle ringbuf_ctor_static(uint8_t *buf, unsigned int size);
-
 /**
  * @brief ringbuf destructor
  *
