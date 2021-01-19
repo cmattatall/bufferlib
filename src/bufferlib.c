@@ -40,24 +40,3 @@ buffer_handle bufferlib_ringbuf_new(unsigned int size)
 }
 
 
-buffer_handle bufferlib_ringbuf_static(uint8_t *buffer, unsigned int size)
-{
-    buffer_handle handle;
-    if (NULL != buffer)
-    {
-        handle.this       = ringbuf_ctor_static(buffer, size);
-        handle.size       = &ringbuf_size;
-        handle.read_next  = &ringbuf_read_next;
-        handle.write_next = &ringbuf_write_next;
-        handle.delete     = &ringbuf_dtor;
-    }
-    else
-    {
-        handle.this       = NULL;
-        handle.size       = NULL;
-        handle.read_next  = NULL;
-        handle.write_next = NULL;
-        handle.delete     = NULL;
-    }
-    return handle;
-}

@@ -47,16 +47,6 @@ typedef struct buffer_handle
 buffer_handle bufferlib_ringbuf_new(unsigned int size);
 
 
-/**
- * @brief Construct bufferlib handle using a caller provided buffer that
- * uses a ringbuf implementation
- *
- * @param buffer the buffer
- * @param size the buffer size
- * @return buffer_handle the buffer handle
- */
-buffer_handle bufferlib_ringbuf_static(uint8_t *buffer, unsigned int size);
-
 #ifdef __cplusplus
 /* clang-format off */
 }
