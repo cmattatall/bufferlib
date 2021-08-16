@@ -13,7 +13,6 @@
 #include <stdlib.h>
 
 #include "bufferlib.h"
-
 #define TEST_BUF_SIZE 50
 
 #define TEST_MSG "HelloWorld"
